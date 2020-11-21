@@ -1,0 +1,84 @@
+归并排序,合并有序列表,求逆序对个数
+
+之所以将标题中三者放一起是因为它们有密不可分的关系.
+合并有序列表
+
+定义一个空列表 li 用来存放排序后的值;
+定义两个 cursor lc 和 rc,分别指向左右列表的首部;
+比较 lc 和 rc 指向的值,将较小的值放入 li,同时将指向较小值得游标右移一位;
+循环上一步,直到某个游标指向最后;这时左右列表其中一个的全部值已经被加入到 li 中;
+将另外一个列表中的剩余值加入到 li 中.
+
+def merge_ordered_list(left, right):
+    res = []
+    lc = rc = 0
+    while lc < len(left) and rc < len(right):
+        if left[lc] <= right[rc]:
+            res.append(left[lc])
+            lc += 1
+        else:
+            res.append(right[rc])
+            rc += 1
+    res.extend(left[lc:])
+    res.extend(right[rc:])
+    return res
+由以上代码段可以看出,合并过程中只对左右列表分别进行了一遍历,因此时间复杂度为 O(n)
+
+归并排序
+
+归并排序分为两步:
+
+将数据尽量平均分为左右两部分;
+对左右两部分分别进行排序(递归调用);
+将左右两部分合并,见上节merge_ordered_list.
+
+'''
+遇到问题没人解答？小编创建了一个Python学习交流QQ群：778463939
+寻找有志同道合的小伙伴，互帮互助,群里还有不错的视频学习教程和PDF电子书！
+'''
+def merge_sort(li):
+    if len(li) == 1:
+        return li
+    # split
+    mid_index = len(li) // 2
+    left = merge_sort(li[:mid_index])
+    right = merge_sort(li[mid_index:])
+    # merge
+    return merge_ordered_list(left, right)
+
+因为每次都是平均分的,因此将一个长度为 n 的列表分为 n 个长度为 1 的子列表需要lg(n)次操作(可以将拆分过程想象为树的分叉),因此merge_sort需递归调用 n 次;
+
+又因为每次调用的时间复杂度为O(n),故整个过程的时间复杂度为O(nlg(n))
+
+求逆序对个数
+
+如果采用暴力求解,分别求每个元素逆序对,需要两两比较列列表中的元素,时间复杂度为 O(n**2);
+结合归并排序可以将时间复杂度降为O(nlg(n));
+
+在第一节合并有序列表第三步中,rc 指向元素right[rc]小于 lc 指向元素left[lc]时, left[lc:]中的每个元素都和right[rc]组成了逆序对,由此可得出逆序对个数,代码如下:
+
+对merge_ordered_list进行稍许修改,记录逆序对个数.
+
+'''
+遇到问题没人解答？小编创建了一个Python学习交流QQ群：778463939
+寻找有志同道合的小伙伴，互帮互助,群里还有不错的视频学习教程和PDF电子书！
+'''
+inversion_count = 0
+
+def merge_ordered_list(left, right):
+    global inversion_count
+    res = []
+    lc = rc = 0
+    while lc < len(left) and rc < len(right):
+        if left[lc] <= right[rc]:
+            res.append(left[lc])
+            lc += 1
+        else:
+            res.append(right[rc])
+            rc += 1
+            # 统计逆序对个数
+            inversion_count += len(left[lc:])
+    res.extend(left[lc:])
+    res.extend(right[rc:])
+    return res
+这时调用merge_sort会同时得出li中逆序对个数,时间复杂度为归并排序的复杂度O(nlg(n)).
