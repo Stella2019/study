@@ -82,3 +82,53 @@ def merge_ordered_list(left, right):
     res.extend(right[rc:])
     return res
 这时调用merge_sort会同时得出li中逆序对个数,时间复杂度为归并排序的复杂度O(nlg(n)).
+
+
+
+
+
+本题见于算法导论第三版习题2-4
+
+题设：对于一个序列a1,a2,a3…an, 若存在i,j，使得i<j且ai>aj，则称为一个逆序对
+
+输入：一个list对象、
+
+输出：list中逆序对数目
+
+分析：一个朴素的想法是这样的：依次遍历list中每一个元素，对每一个元素，查找其之后的每一个元素并与其比较，出现逆序对则计数+1，时间复杂度为O(n^2)——(n-1)+(n-2)+…+1。
+
+但对于这个算法，实际上有隐含的条件被我们忽略了，例如当我们发现a2<a1时，那么对于和a1比较过的所有元素，与a1形成逆序对的所有元素实际上也与a2形成逆序对（除a2外），实际上时间复杂度可以精简到O(nlogn)。
+
+我们可以换一个思路来考虑这个问题：对于一个a1<a2<a3...<an的有序序列，逆序对是为0的，那么我们实际上是要进行一个排序，当发现一次逆序，计数+1，而排序算法的最优解法为O(nlogn)
+
+代码python实现如下——基于分治思想的归并排序，将有序列表和逆序对计数一同返回的递归解法：
+
+def InversionNum(lst):
+    # 改写归并排序,在归并排序中，每当R部分元素先于L部分元素插入原列表时，逆序对数要加L剩余元素数
+    if len(lst) == 1:
+        return lst,0
+    else:
+        n = len(lst) // 2
+        lst1,count1 = InversionNum(lst[0:n])
+        lst2,count2 = InversionNum(lst[n:len(lst)])
+        lst,count = Count(lst1,lst2,0)
+        return lst,count1+count2+count
+ 
+def Count(lst1, lst2,count): 
+    i = 0
+    j = 0
+    res = []
+    while i < len(lst1) and j < len(lst2):
+        if lst1[i] <= lst2[j]:
+            res.append(lst1[i])
+            i += 1
+        else:
+            res.append(lst2[j])
+            count += len(lst1)-i # 当右半部分的元素先于左半部分元素进入有序列表时，逆序对数量增加左半部分剩余的元素数
+            j += 1
+    res += lst1[i:]
+    res += lst2[j:]
+    return res,count
+ 
+ 
+print(InversionNum([11,10,9,8,7,6,5,4,3,2,1]))  # 输出为：[1,2,3,4,5,6,7,8,9,10,11] 55
