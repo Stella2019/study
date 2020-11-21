@@ -1,0 +1,90 @@
+给定一个字符串数组 arr，字符串 s 是将 arr 某一子序列字符串连接所得的字符串，如果 s 中的每一个字符都只出现过一次，那么它就是一个可行解。
+
+请返回所有可行解 s 中最长长度。
+
+ 
+
+示例 1：
+
+输入：arr = ["un","iq","ue"]
+输出：4
+解释：所有可能的串联组合是 "","un","iq","ue","uniq" 和 "ique"，最大长度为 4。
+示例 2：
+
+输入：arr = ["cha","r","act","ers"]
+输出：6
+解释：可能的解答有 "chaers" 和 "acters"。
+示例 3：
+
+输入：arr = ["abcdefghijklmnopqrstuvwxyz"]
+输出：26
+ 
+from typing import List
+
+
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        if not arr:
+            return 0
+
+        # 先处理一些极端场景，避免回溯超时
+        if len(set(''.join(arr))) == len(''.join(arr)):
+            return len(''.join(arr))
+
+        self.rst = 0
+        def _helper(sub_s, start):
+            if start == len(arr):
+                # 递归终止条件
+                return
+
+            for i in range(start, len(arr)):
+                # 遍历可选择项
+                if len(set(sub_s + arr[i])) != len(sub_s + arr[i]):
+                    # 该选择项不符合条件，跳过
+                    continue
+                # 选择项符合条件，加入
+                sub_s += arr[i]
+                # 更新结果值
+                self.rst = max(self.rst, len(sub_s))
+                # 开始下一个起始点遍历
+                _helper(sub_s, start + 1)
+                # 上一轮次选择结束，去掉上一轮选择的起始点（回溯）
+                sub_s = sub_s[:len(sub_s) - len(arr[i])]
+
+        _helper('', 0)
+        return self.rst
+
+
+if __name__ == '__main__':
+    test = Solution()
+    print(test.maxLength(["abcdefghijklmnopqrstuvwxyz"]))
+ 
+ 
+解题思路
+虽然性能不怎么好，可是模板是通用的，改动一点点就可打印出串联路径，而非仅仅是数目。
+回溯建议搞个专项练习，搞了快一个礼拜，总算有点长进了。
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        self.res=0
+
+        def isvival(path,new):
+            for i in new:
+                for j in path:
+                    if i in j:
+                        return False
+            return True
+
+        def helper(first,path):
+            if len("".join(path))>self.res:
+                self.res=len("".join(path))
+
+            for i in range(first,len(arr)):
+                if isvival(path,arr[i]) and len(arr[i])==len(set(arr[i])):
+                    path.append(arr[i])
+                    helper(i+1,path)
+                    path.pop()
+        helper(0,[])
+        return self.res
+
+                
+ 
