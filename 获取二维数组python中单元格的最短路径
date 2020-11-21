@@ -1,0 +1,171 @@
+每天一道LeetCode-----计算从二维数组的左上角到达右下角的所有路径数及最短的那条，如果存在障碍物时又是多少
+
+计算从左上角有多少条不同的路径可以到达右下角，移动方向只能是向右和向下。
+
+对于每个位置，都有两种移动的可能，即向右移动和向下移动。可以用深度优先（dfs）解决，同时为了解决重复计算，可以用动态规划的思想，记录从dp[i][j]到达右下角有多少条不同的路径。
+
+除了深度优先之外，可以用迭代法执行动态规划，这样做可以减少dp的维度，只需要一维数组即可，不过要改变dp的含义，假设当前所在位置为(m, n)，那么dp[n]代表从左上角到达当前位置的不同路径书，原因为
+
+移动方向只能向右和向下，所以只要向下移动一行，就不能再返回上一行。这说明，对于行的记录是可以忽略的。
+只要遍历每一行的每一列，不断更新dp[n]直到到达右下角即可，假设当前在第m行的第n列，那么dp[n]表示从左上角开始移动可以有多少条不同的路径达到第m行第n列
+对于每个位置，它可以从上一行的当前列向下移动到达当前位置，也可以从当前行的上一列向右移动到达当前位置
+所以dp[n] = dp[n] + dp[n - 1]，dp[n]代表从上一行的第n列到达右下角的不同路径数，dp[n - 1]代表从当前行的第n-1列到达右下角的不同路径数
+直到遍历到右下角，即遍历了所有行所有列，那么dp[n]就代表从左上角到达右下角的不同路径数
+
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        if not grid:
+            return -1
+        r, c = len(grid), len(grid[0])
+        if grid[0][0] == 1 or grid[-1][-1] == 1:
+            return -1
+        
+        dire = [[1, 0], [-1, 0], [0, -1], [0, 1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+        q = [(0, 0, 1)]
+        while len(q):
+            m, n, l = q.pop(0)
+            if m == r-1 and n == c-1:
+                return l
+            for i, j in dire:
+                nx, ny = m + i, n + j
+                if nx >= 0 and nx < r and ny >= 0 and ny < c and not grid[nx][ny]:
+                    q.append((nx, ny, l + 1))
+                    grid[nx][ny] = 1
+
+        return -1
+        
+        
+ 接着上面的问题，如果某些位置有障碍物，那么有多少条路径可以到达右下角。
+移动的过程中不能到达障碍物所在的位置。
+
+方法和上面一样，仍然有一维数组记录到达某一列的不同路径，不过需要判断某个位置是否有障碍物，如果有，那么dp[n]为0，否则dp[n] = dp[n - 1] + dp[n]
+
+另外，对于dp[0]要特殊处理，不能像上面一样直接从第一行第一列开始，因为第0行第0列都可能存在障碍物导致dp[n[不是1而是0.
+核心代码：dp[j] = 0 if obstacleGrid[i][j] else dp[j]+dp[j-1]
+
+判断当前位置是否为障碍物，如果是的话，将该点赋值为0,不是的话,动态更新当前位置的最新路径条数，并覆盖。
+dp中最后一个值不会对原本矩阵产生影响。
+class Solution(object):
+    def uniquePathsWithObstacles(self, obstacleGrid):
+        """
+        :type obstacleGrid: List[List[int]]
+        :rtype: int
+        """
+        # 定义状态：即数据元素的含义：dp表示当前位置的路径条数
+        # 建立状态转移方程：dp[i] = dp[i]+dp[i-1]
+        # 设定初始值：增加初始值1，即dp = [1] + [0]*n
+        # 状态压缩：即优化数组空间,将二维数组压缩到一维数组,逐行计算当前最新路径条数，并覆盖上一行对应的路径条数
+        # 选取dp[-2]表示到达finish位置路径总条数,因为一开始新增加的1,因此最终值要往前推一个
+        
+        m = len(obstacleGrid)
+        n = len(obstacleGrid[0])
+        dp = [1] + [0]*n
+        for i in range(0,m):
+            for j in range(0,n):
+                dp[j] = 0 if obstacleGrid[i][j] else dp[j]+dp[j-1]
+        return dp[-2]
+ 
+
+
+
+
+和上面的题一样，只是这回要求是找到路径长度最短的那一条，路径长度是路径上所有数字的和
+
+仍然采用迭代法的动态规划，不过要改变dp的含义，即dp[n]表示从左上角到达当前位置的最小路径长，而不在是不同路径数
+
+另外，第一行和第一列不再单纯的是1，而是数字累加，代表路径长
+
+
+
+https://www.cnblogs.com/wonz/p/12369248.html
+
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        if grid[0][0] == 1 or grid[-1][-1] == 1:  # top-left is not empty or bottom-right is not empty
+            return -1
+
+        # eight directions: → ← ↓ ↑ ↗ ↙ ↖ ↘
+        directions = [[1, 0], [-1, 0], [0, -1], [0, 1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+        
+        queue = [(0, 0, 1)]  # location, cnt
+        n = len(grid)
+
+        # BFS
+        while len(queue):
+            x0, y0, cnt = queue.pop(0)  # pop (location, cnt)
+            if x0 == n - 1 and y0 == n - 1:  # already arrive at bottom-right
+                return cnt
+
+            # eight directions
+            for i, j in directions:
+                x, y = x0 + i, y0 + j
+                # (x, y) is in the grid and grid[x][y] = 0, also means: grid[x][y] is not visited
+                if 0 <= x < n and 0 <= y < n and not grid[x][y]:
+                    queue.append((x, y, cnt + 1))
+                    grid[x][y] = 1  # visited
+        
+        return -1
+        
+        
+        
+from typing import List
+
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        if grid[0][0] == 1 or grid[-1][-1] == 1:  # top-left is not empty or bottom-right is not empty
+            return -1
+
+        # eight directions: → ← ↓ ↑ ↗ ↙ ↖ ↘
+        directions = [[1, 0], [-1, 0], [0, -1], [0, 1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+        
+        queue = [(0, 0, 1)]  # location, cnt
+        n = len(grid)
+
+        # BFS
+        while len(queue):
+            x0, y0, cnt = queue.pop(0)  # pop (location, cnt)
+            if x0 == n - 1 and y0 == n - 1:  # already arrive at bottom-right
+                return cnt
+
+            # eight directions
+            for i, j in directions:
+                x, y = x0 + i, y0 + j
+                # (x, y) is in the grid and grid[x][y] = 0, also means: grid[x][y] is not visited
+                if 0 <= x < n and 0 <= y < n and not grid[x][y]:
+                    queue.append((x, y, cnt + 1))
+                    grid[x][y] = 1  # visited
+        
+        return -1
+
+if __name__ == "__main__":
+    grid = [[0,0,0],[1,1,0],[1,1,0]]
+    print(Solution().shortestPathBinaryMatrix(grid))
+
+
+
+
+
+我有一个二维数组arr，其中每个单元格都有一个值1、2或3，例如arr[0][0] = 3, arr[2][1] = 2 and arr[0][4] = 1。我想知道从给定单元格（例如arr[5][5]）到最近的值为2的单元格（其中路径不应包含任何值为1的单元格）的最短路径。有什么建议吗？
+
+下面是BFS的脚本，但我不知道如何让它接受2d数组作为图形，并以数组中的某个单元格位置作为起始点，然后从该单元格到最近的2，避开1的单元格，使其看起来像BFS（2darray，起始位置，2）？
+
+def bfs(graph, start, end):
+    # maintain a queue of paths
+    queue = []
+    # push the first path into the queue
+    queue.append([start])
+    while queue:
+        # get the first path from the queue
+        path = queue.pop(0)
+        # get the last node from the path
+        node = path[-1]
+        # path found
+        if node == end:
+            return path
+        # enumerate all adjacent nodes, construct a new path and push it into the queue
+        for adjacent in graph.get(node, []):
+            new_path = list(path)
+            new_path.append(adjacent)
+            queue.append(new_path)
+
+print bfs(graph, '1', '11')
