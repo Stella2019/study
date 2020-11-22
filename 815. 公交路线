@@ -1,0 +1,145 @@
+我们有一系列公交路线。每一条路线 routes[i] 上都有一辆公交车在上面循环行驶。例如，有一条路线 routes[0] = [1, 5, 7]，表示第一辆 (下标为0) 公交车会一直按照 1->5->7->1->5->7->1->... 的车站路线行驶。
+
+假设我们从 S 车站开始（初始时不在公交车上），要去往 T 站。 期间仅可乘坐公交车，求出最少乘坐的公交车数量。返回 -1 表示不可能到达终点车站。
+
+ 
+
+示例：
+
+输入：
+routes = [[1, 2, 7], [3, 6, 7]]
+S = 1
+T = 6
+输出：2
+解释：
+最优策略是先乘坐第一辆公交车到达车站 7
+ 
+ 广度优先搜索：
+我们将每一条公交路线（而不是每一个车站）看成图中的一个点，如果两条公交路线有交集，那么它们在图中对应的点之间就有一条边。此外，起点站 S 和终点站 T 也分别是图中的一个点，如果一条公交路线包含了 S 或 T，那么也需要和 S 或 T 对应的点连一条边。此时，在这个图上从 S 到 T 的最短路径长度即为答案，我们可以用广度优先搜索来找出最短路径。
+
+在计算两条公交路线是否有交集时，可以用的方法有很多种。例如将公交路线放在集合中，检查两个集合的交集是否为空；或者将公交路线中的车站进行递增排序，并使用双指针的方法检查是否有相同的车站。
+
+ class Solution(object):
+    def numBusesToDestination(self, routes, S, T):
+        if S == T: return 0
+        routes = map(set, routes)
+        graph = collections.defaultdict(set)
+        for i, r1 in enumerate(routes):
+            for j in xrange(i+1, len(routes)):
+                r2 = routes[j]
+                if any(r in r2 for r in r1):
+                    graph[i].add(j)
+                    graph[j].add(i)
+
+        seen, targets = set(), set()
+        for node, route in enumerate(routes):
+            if S in route: seen.add(node)
+            if T in route: targets.add(node)
+
+        queue = [(node, 1) for node in seen]
+        for node, depth in queue:
+            if node in targets: return depth
+            for nei in graph[node]:
+                if nei not in seen:
+                    seen.add(nei)
+                    queue.append((nei, depth+1))
+        return -1
+
+在广度优先搜索时，包含 NN 个点的图的边数最大可以达到 O(N^2)O(N 
+2
+ )，因此时间复杂度为 O(N^2)O(N 
+2
+ )。
+ 
+空间复杂度：O(N^2)O(N 
+2
+ )，用来存储图。在 Python 代码中，由于我们使用了额外的集合，因此空间复杂度需要加上 \sum b_i∑b 
+i
+​	
+ 。
+
+作者：LeetCode
+链接：https://leetcode-cn.com/problems/bus-routes/solution/gong-jiao-lu-xian-by-leetcode/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+ 解题思路
+之前代码一直超时，加了routes = map(set, routes)就通过了... Python写题有时确实恼火。
+思路比较简单，先构建每个节点可以1次公车去到的所有路线。然后对这张图就行BFS，BFS关键就是入栈出栈的操作：每层寻路都拿出栈中所有节点，然后把与栈中节点的下一层所有通路放入栈中，再将栈中通路减掉已经走过的节点。
+ 
+from collections import defaultdict
+
+
+class Solution:
+    def numBusesToDestination(self, routes: List[List[int]], S: int, T: int) -> int:
+        goto = defaultdict()
+        routes = map(set, routes)
+        # 实际O(N)时间复杂度
+        for route in routes:
+            for r in route:
+                if r not in goto:
+                    goto[r] = set()
+                    goto[r] = tuple(route)
+                else:
+                    goto[r] += tuple(route)
+
+
+        def bfs(node):
+            if node == T:
+                return 0
+            depth = 1
+            passby = set()
+            nodes = goto[node]
+            tmp_nodes = set()
+            while nodes:
+                if T in nodes:
+                    return depth
+                tmp_nodes.clear()
+                depth += 1
+                for n in nodes:
+                    passby.add(n)
+                    tmp_nodes = tmp_nodes.union(goto[n])
+                nodes = tmp_nodes - passby
+
+            return -1
+
+        ans = bfs(S)
+
+        return ans
+ 
+ 先统计所有的站台能等到哪些公交车,然后利用队列开始BFS搜索
+参考了bilibili上花花酱的视频中c++代码
+时间不是很快
+import queue
+class Solution:
+    def numBusesToDestination(self, routes: List[List[int]], S: int, T: int) -> int:
+        if S == T: return 0
+        m = {}
+        q = queue.Queue()
+        for i in range(len(routes)):
+            for stop in routes[i]:
+                if stop in m:
+                    m[stop].append(i)
+                else:
+                    m[stop] = [i]
+        # print(m)
+        taken = [0] * len(routes)
+        buses = 0
+        q.put(S)
+        while not q.empty():
+            size = q.qsize()
+            buses += 1
+            while size:
+                size -= 1
+                cur_stop = q.get()
+                for bus in m[cur_stop]:
+                    if taken[bus]: continue
+                    taken[bus] = 1
+                    for stop in routes[bus]:
+                        if stop == T: return buses
+                        q.put(stop)
+                        # print(stop)
+        return -1
+
+ 
