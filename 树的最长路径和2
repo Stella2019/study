@@ -1,0 +1,64 @@
+### 树的最长路径和124
+
+给定一个非空二叉树，返回其最大路径和。
+
+本题中，路径被定义为一条从树中任意节点出发，达到任意节点的序列。该路径至少包含一个节点，且不一定经过根节点。
+是路径的root，此时的最大值来自于node.left+node.right;
+不是路径的root，此时的最大值来自于node.left或node.right
+
+"""
+
+class Solution:
+    def maxPathSum(self, root):
+         
+        :type root: TreeNode
+        :rtype: int
+         
+        res = float('-inf')
+        def maxPath(node):
+            nonlocal res 
+            if not node:
+                return 0
+            
+            left = max(0, maxPath(node.left))
+            right = max(0, maxPath(node.right))
+            res = max(res, left + right + node.val)
+            return max(left, right) + node.val
+        
+        maxPath(root)
+        return res
+
+
+
+Definition for a binary tree node.
+class TreeNode(object):
+    def __init__(self, x):
+        self.val = x
+        self.left = None
+        self.right = None
+
+class Solution(object):
+    def maxPathSum(self, root):
+         
+        :type root: TreeNode
+        :rtype: int
+        
+        def dfs(root):
+            if not root: return (0, float("-inf"))
+            (l, lm), (r, rm) = map(dfs, [root.left, root.right])
+            return (max(root.val, root.val + max(l, r)), max(lm, rm, root.val + max(l, r), root.val, root.val + l + r))
+        return dfs(root)[1]
+
+"""
+
+"""
+
+if __name__ == '__main__': 
+    arr = [12, 11, 13, 5, 6, 7]  
+    print ("Given array is", end ="\n")  
+    printList(arr) 
+    mergeSort(arr) 
+    print("Sorted array is: ", end ="\n") 
+    printList(arr) 
+
+"""
