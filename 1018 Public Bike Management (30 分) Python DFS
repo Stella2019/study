@@ -1,0 +1,77 @@
+这个问题比较坑的一点就是注意调整沿途车的数量只在去程做，回程不做。也就是说，只有前往问题车站的路上才可以调整车辆。
+
+使用DFS在做的时候，对每一个站点 i 会维护两个参数require和extra，表示在当前站点去程带去的车辆数和回程带回的车辆数。由于上面所述的那一点，每一站计算完成require和extra后，下一站只能由多出来的extra辆车去填补该站缺少的车，不能用该站多余的车填补前面几站缺少的车。也就是说，require只能增加，extra可增可减。明白这一点，问题就好解决了。
+
+cmax,n,sp,m = [int(x) for x in input().split() ]
+ 
+C = [0] + [ int(x) for x in input().split() ]
+ 
+Neib = [ {} for i in range(n+1) ]
+ 
+for i in range(m):
+    si,sj,t = [ int(x) for x in input().split() ]
+    Neib[si][sj] = t
+    Neib[sj][si] = t
+ 
+minpath = []
+minrequire = cmax+1
+minextra = cmax+1
+mindis = -1
+vis = [0] * (n+1)
+def dfs (Neib,path,dis,require,extra,st):
+    global minrequire
+    global minextra
+    global mindis
+    global minpath
+ 
+    #print(path,dis,require,extra,st)
+ 
+    vis[st] = 1
+    if st == sp:
+        if mindis == -1 or dis < mindis \
+           or (dis == mindis and (require < minrequire or \
+            require == minrequire and extra < minextra )):
+            
+                    minextra = extra
+                    minrequire = require
+                    mindis = dis
+                    minpath = path
+        vis[st] = 0
+        return
+ 
+    for i,t in Neib[st].items():
+        if not vis[i]:
+            #deal with need and take
+            need,take = require,extra
+            # get i's Current state
+            diff = C[i] - cmax // 2
+            # if i's state less than perfection
+            if diff < 0 :
+            # if take can feed i's need , decrease take
+                if take >= (-diff) :
+                    take += diff
+            # if can't , let take be 0, increase need
+                else:
+                    
+                    need += (-diff) - take
+                    take = 0
+            # if i's state more than perfection , just increase take
+            # need can't be feed by i's state
+            # the bike needed is used in adjusting the state before approching i's state
+            # so we can just take more, can't need less
+            # 2 test cases here.
+            elif diff > 0:
+                take += diff
+ 
+ 
+            #dfs i
+            dfs(Neib,path+[i],dis + t,need,take,i)
+    vis[st] = 0
+ 
+ 
+dfs(Neib,[0],0,0,0,0)
+#print(minpath,minrequire,minextra,mindis)
+strpath = '->'.join([str(x) for x in minpath])
+print(minrequire,strpath,minextra)
+ 
+
