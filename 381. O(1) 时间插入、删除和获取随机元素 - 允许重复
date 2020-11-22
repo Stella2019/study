@@ -1,0 +1,207 @@
+设计一个支持在平均 时间复杂度 O(1) 下， 执行以下操作的数据结构。
+
+注意: 允许出现重复元素。
+
+insert(val)：向集合中插入元素 val。
+remove(val)：当 val 存在时，从集合中移除一个 val。
+getRandom：从现有集合中随机获取一个元素。每个元素被返回的概率应该与其在集合中的数量呈线性相关。
+示例:
+
+// 初始化一个空的集合。
+RandomizedCollection collection = new RandomizedCollection();
+
+// 向集合中插入 1 。返回 true 表示集合不包含 1 。
+collection.insert(1);
+
+// 向集合中插入另一个 1 。返回 false 表示集合包含 1 。集合现在包含 [1,1] 。
+collection.insert(1);
+
+// 向集合中插入 2 ，返回 true 。集合现在包含 [1,1,2] 。
+collection.insert(2);
+
+// getRandom 应当有 2/3 的概率返回 1 ，1/3 的概率返回 2 。
+collection.getRandom();
+
+// 从集合中删除 1 ，返回 true 。集合现在包含 [1,2] 。
+collection.remove(1);
+
+// getRandom 应有相同概率返回 1 和 2 。
+collection.getRandom();
+ 
+ 方法一：哈希表
+思路与算法
+
+为了使得 O(1)O(1) 时间内能够随机获取一个元素，我们将每个数值（可以重复）存储在一个列表 \textit{nums}nums 中。这样，获取随机元素时，只需要随机生成一个列表中的索引，就能够得到一个随机元素。
+
+这样做的问题在于：列表中的随机删除并不是 O(1)O(1) 的。然而我们可以发现，列表中元素的顺序是无关紧要的，只要它们正确地存在于列表中即可。因此，在删除元素时，我们可以将被删的元素与列表中最后一个元素交换位置，随后便可以在 O(1)O(1) 时间内，从列表中去除该元素。
+
+这需要我们额外维护数值在列表中每一次出现的下标集合。对于数值 \textit{val}val 而言，记其下标集合为 S_{idx}S 
+idx在删除时，我们找出 valval 出现的其中一个下标 ii，并将 \textit{nums}[i]nums[i] 与 \textit{nums}[\textit{nums}.\textit{length}-1]nums[nums.length−1] 交换。随后，将 ii 从 S_{val}S 
+val中去除，并将 S_{\textit{nums}[\textit{nums}.\textit{length}-1]}S 
+nums[nums.length−1] 中原有的 \textit{nums}[\textit{nums}.\textit{length}-1]nums[nums.length−1] 替换成 ii。由于集合的每个操作都是 O(1)O(1) 的，因此总的平均时间复杂度也是 O(1)O(1) 的。
+
+class RandomizedCollection:
+    def __init__(self):
+        self.d = collections.defaultdict(set)
+        self.v = []
+
+    def insert(self, val: int) -> bool:
+        self.d[val].add(len(self.v))
+        self.v.append(val)
+        return len(self.d[val]) == 1
+
+    def remove(self, val: int) -> bool:
+        if not self.d[val]:
+            return False
+        self.v[(i := self.d[val].pop())] = self.v[-1]
+        self.d[(last := self.v.pop())].discard(len(self.v))
+        i < len(self.v) and self.d[last].add(i)
+        return True
+
+    def getRandom(self) -> int:
+        return random.choice(self.v)
+
+ 
+
+ 
+ 这个题目虽然是困难，但是我觉得不配。。。。。。
+这里边的最大技巧点在于，删除是利用位置交换+pop列表最后一位，这些操作是固定步骤这个特点
+然后就是花式索引保存
+打印和直接交换真的费时间。。。。。。
+
+import random
+class RandomizedCollection:
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.table = {}
+        self.ns = []
+
+    def insert(self, val: int) -> bool:
+        """
+        Inserts a value to the collection. Returns true if the collection did not already contain the specified element.
+        """
+        flag = val not in self.table
+        if flag: self.table[val] = {len(self.ns),}
+        else: self.table[val].add(len(self.ns))
+        self.ns.append(val)
+        return flag
+        
+
+
+    def remove(self, val: int) -> bool:
+        """
+        Removes a value from the collection. Returns true if the collection contained the specified element.
+        """
+        flag = val in self.table
+        if flag:
+            last_idx = len(self.ns)-1
+            v = self.ns[last_idx]
+            index = self.table[val].pop()
+            self.ns[index] = self.ns[last_idx]
+            if last_idx != index:  # 如果只是最后一位的话，直接删除就好了
+                self.table[v].remove(last_idx)
+                self.table[v].add(index)
+            if not len(self.table[val]): self.table.pop(val)
+
+            self.ns.pop()
+        return flag
+
+
+    def getRandom(self) -> int:
+        """
+        Get a random element from the collection.
+        """
+        return random.choice(self.ns)
+
+
+
+# Your RandomizedCollection object will be instantiated and called as such:
+# obj = RandomizedCollection()
+# param_1 = obj.insert(val)
+# param_2 = obj.remove(val)
+# param_3 = obj.getRandom()
+
+
+
+此题难点在于怎么以o(1)的时间复杂度来删除元素，我们可以采用构建索引的方法来实现。在删除时，直接删除想要删掉元素的最后一个索引tmp，然后将此索引tmp的值arr[tmp]换成整个数组中最后一个值arr[-1]。再将最后一个元素的索引从len（arr）-1更新到
+tmp即可。
+需要注意的是这个更新过程一定要先添加新索引再删去旧索引，否则在要删去的元素是数组最后一个元素时，会出现无法删去的bug。
+下面代码中position是索引，arr是数组
+ 
+class RandomizedCollection:
+
+    def __init__(self):
+        self.position=collections.defaultdict(set)
+        self.arr=[]
+    def insert(self, val: int) -> bool:
+        self.position[val].add(len(self.arr))
+        self.arr.append(val)
+        return len(self.position[val])==1
+    def remove(self, val: int) -> bool:
+        if not self.position[val]:  return False
+        tmp=self.position[val].pop()
+        self.arr[tmp]=self.arr[-1]
+        self.position[self.arr[-1]].add(tmp)
+        self.position[self.arr[-1]].discard(len(self.arr)-1)
+        self.arr.pop()
+        return True
+    def getRandom(self) -> int:
+        return random.choice(self.arr)
+
+ 
+ 解题思路
+将最后一个元素交换的前面来，只记得加入新idx，忘了删除就idx
+这里使用了一个数组来表达随机的产出，内部用了map[int,Set[int]]来达到存取O(1)的时间复杂度，用map因为要存取O(1),用set是因为可以有重复值。
+from typing import Mapping, Set, List, NoReturn
+import random
+
+
+class RandomizedCollection:
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.nums: List[int] = []
+        self.numidx: Mapping[int, Set[int]] = {} #事实证明Map可以当做字典用
+
+    def insert(self, val: int) -> int:
+        """
+        Inserts a value to the collection. Returns true if the collection did not already contain the specified element.
+        """
+        self.nums.append(val)
+        if val in self.numidx.keys():
+            self.numidx[val].add(len(self.nums) - 1)
+            return False
+        else:
+            self.numidx[val] = set()
+            self.numidx[val].add(len(self.nums) - 1)
+            return True
+
+    def remove(self, val: int) -> bool:
+        """
+        Removes a value from the collection. Returns true if the collection contained the specified element.
+        """
+        if not val in self.numidx.keys():
+            return False
+        if len(self.numidx[val]) == 0:
+            return False
+
+        idx = self.numidx[val].pop() #得到被删除的末尾元素的idx
+        self.nums[idx], self.nums[len(self.nums) - 1] = self.nums[len(self.nums) - 1], self.nums[idx]#交换被删除的元素和末尾元素
+        self.numidx[self.nums[idx]].add(idx)
+        self.numidx[self.nums[idx]].remove(len(self.nums) - 1)   #将最后一个元素交换的前面来，只记得加入新idx，忘了删除就idx
+        self.nums.pop()#删除末尾元素
+        return True
+
+    def getRandom(self) -> int:
+        """
+        Get a random element from the collection.
+        """
+        return self.nums[random.randint(0, len(self.nums) - 1)]
+ 
+ 
+ 
