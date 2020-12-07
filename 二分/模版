@@ -1,0 +1,68 @@
+模板
+分享几个常用的的二分法模板。
+查找一个数
+public int binarySearch(int[] nums, int target) {
+    // 左右都闭合的区间 [l, r]
+    int left = 0;
+    int right = nums.length - 1;
+
+    while(left <= right) {
+        int mid = left + (right - left) / 2;
+        if(nums[mid] == target)
+            return mid;
+        else if (nums[mid] < target)
+            // 搜索区间变为 [mid+1, right]
+            left = mid + 1;
+        else if (nums[mid] > target)
+            // 搜索区间变为 [left, mid - 1]
+            right = mid - 1;
+    }
+    return -1;
+}
+寻找最左边的满足条件的值
+public int binarySearchLeft(int[] nums, int target) {
+    // 搜索区间为 [left, right]
+    int left = 0;
+    int right = nums.length - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (nums[mid] < target) {
+            // 搜索区间变为 [mid+1, right]
+            left = mid + 1;
+        } else if (nums[mid] > target) {
+            // 搜索区间变为 [left, mid-1]
+            right = mid - 1;
+        } else if (nums[mid] == target) {
+            // 收缩右边界
+            right = mid - 1;
+        }
+    }
+    // 检查是否越界
+    if (left >= nums.length || nums[left] != target)
+        return -1;
+    return left;
+}
+寻找最右边的满足条件的值
+public int binarySearchRight(int[] nums, int target) {
+    // 搜索区间为 [left, right]
+    int left = 0
+    int right = nums.length - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (nums[mid] < target) {
+            // 搜索区间变为 [mid+1, right]
+            left = mid + 1;
+        } else if (nums[mid] > target) {
+            // 搜索区间变为 [left, mid-1]
+            right = mid - 1;
+        } else if (nums[mid] == target) {
+            // 收缩左边界
+            left = mid + 1;
+        }
+    }
+    // 检查是否越界
+    if (right < 0 || nums[right] != target)
+        return -1;
+    return right;
+}
+如果题目重点不是二分，也就是说二分只是众多步骤中的一步，大家也可以直接调用语言的 API，比如 Python 的 bisect 模块。
